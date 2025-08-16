@@ -6,6 +6,7 @@ import person_icon from './person_icon.svg'
 import hand_wave from './hand_wave.png'
 import header_img from './header_img.png'
 import user_image from './user_image.png'
+import man_image from './man.png'
 export const assets = {
     arrow_icon,
     lock_icon,
@@ -14,5 +15,6 @@ export const assets = {
     person_icon,
     hand_wave,
     header_img,
-    user_image
+    user_image,
+    man_image
 }

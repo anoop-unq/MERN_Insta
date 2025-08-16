@@ -17,7 +17,7 @@ const HomePage = () => {
     <div className="min-h-screen bg-gray-50">
       {/* Header with back button */}
       <header className="sticky top-0 z-10 bg-white shadow-sm">
-        <div className="max-w-2xl mx-auto px-4 py-4 flex items-center">
+        <div className="px-4 py-4 flex items-center">
           <button
             onClick={() => navigate("/")}
             className="flex items-center justify-center bg-white text-gray-700 rounded-full p-3 w-12 h-12 hover:bg-gray-100 transition duration-200 ease-in-out shadow-sm border border-gray-200"
@@ -30,11 +30,11 @@ const HomePage = () => {
       </header>
 
       {/* Main content */}
-      <main className="max-w-2xl mx-auto px-4 py-6">
-        <div className="mb-8">
+      <main >
+        <div className="max-w-2xl mx-auto px-4 py-6">
           <PostForm />
         </div>
-        <div className="space-y-6">
+        <div >
           <PostList />
         </div>
       </main>
