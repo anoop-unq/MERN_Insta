@@ -7,7 +7,11 @@ import {
   updatePost,
   likePost,
   deletePostImage,
-  searchUser
+  searchUser,
+  addComment,
+  deleteComment,
+  getComments,
+
 } from '../controllers/postController.js';
 import { userAuthMiddleware } from '../middileware/userAuth.js';
 import { handleMulterErrors, upload } from '../middlewares/upload.js';
@@ -32,5 +36,11 @@ validRouter.post("/:postId/like",userAuthMiddleware,likePost)
 
 validRouter.delete("/:id/delete-image",userAuthMiddleware,deletePostImage)
 
+validRouter.post('/:postId/comments', userAuthMiddleware, addComment);
+
+validRouter.delete('/:commentId', userAuthMiddleware, deleteComment);
+
 validRouter.get("/search",searchUser)
+
+validRouter.get('/:postId/user-comments', getComments);
 export default validRouter;

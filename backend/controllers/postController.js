@@ -1,6 +1,8 @@
+import Comment from '../models/Comment.js';
 import Post from '../models/Post.js';
 import userModel from '../models/user.js';
 import { v2 as cloudinary } from 'cloudinary';
+
 
 export const createPost = async (req, res) => {
   try {
@@ -322,6 +324,141 @@ export const updatePost = async (req, res) => {
       success: false,
       error: 'Failed to update post',
       details: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
+};
+
+
+
+// controllers/commentController.js
+
+
+export const addComment = async (req, res) => {
+  try {
+    const { postId } = req.params;
+    const { content } = req.body;
+    const userId = req.userId;
+
+    // Validate input
+    if (!content || !content.trim()) {
+      return res.status(400).json({ message: 'Comment content is required' });
+    }
+
+    // Check if post exists
+    const post = await Post.findById(postId);
+    if (!post) {
+      return res.status(404).json({ message: 'Post not found' });
+    }
+
+    // Create new comment
+    const comment = new Comment({
+      content,
+      author: userId,
+      post: postId
+    });
+
+    // Save comment
+    await comment.save();
+
+    // Add comment to post's comments array
+    post.comments.push(comment._id);
+    await post.save();
+
+    // Populate author info before sending response
+    const populatedComment = await Comment.findById(comment._id)
+      .populate('author', 'name username photo');
+
+    res.status(201).json({
+      success: true,
+      message: 'Comment added successfully',
+      comment: populatedComment
+    });
+
+  } catch (error) {
+    console.error('Error adding comment:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+export const deleteComment = async (req, res) => {
+  try {
+    const { commentId } = req.params;
+    const userId = req.user._id;
+
+    // Find and delete comment
+    const comment = await Comment.findOneAndDelete({
+      _id: commentId,
+      author: userId // Ensure only author can delete
+    });
+
+    if (!comment) {
+      return res.status(404).json({ message: 'Comment not found or unauthorized' });
+    }
+
+    // Remove comment reference from post
+    await Post.findByIdAndUpdate(
+      comment.post,
+      { $pull: { comments: commentId } }
+    );
+
+    res.status(200).json({
+      success: true,
+      message: 'Comment deleted successfully'
+    });
+
+  } catch (error) {
+    console.error('Error deleting comment:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+
+export const getComments = async (req, res) => {
+  // try {
+  //   const { postId } = req.params;
+
+  //   // Check if post exists
+  //   const post = await Post.findById(postId);
+  //   if (!post) {
+  //     return res.status(404).json({ message: 'Post not found' });
+  //   }
+
+  //   // Get all comments for the post and populate author info
+  //   const comments = await Comment.find({ post: postId })
+  //     .populate('author', 'name username photo')
+  //     .sort({ createdAt: -1 }); // Newest first
+
+  //   res.status(200).json({
+  //     success: true,
+  //     comments
+  //   });
+
+  // } catch (error) {
+  //   console.error('Error fetching comments:', error);
+  //   res.status(500).json({ message: 'Server error' });
+  // }
+
+
+  try {
+    const { postId } = req.params;
+    
+    // If you have a separate Comment model
+    const comments = await Comment.find({ post: postId })
+      .populate('author', 'name username photo email profilePicture avatar')
+      .sort({ createdAt: -1 }); // Sort by newest first
+    
+    console.log('Found comments:', comments.length);
+    
+    res.status(200).json({
+      success: true,
+      comments: comments
+    });
+    
+  } catch (error) {
+    console.error('Error fetching comments:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error while fetching comments'
     });
   }
 };
