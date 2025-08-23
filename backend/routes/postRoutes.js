@@ -11,6 +11,9 @@ import {
   addComment,
   deleteComment,
   getComments,
+  getPostLikes,
+  getPostComments,
+ 
 
 } from '../controllers/postController.js';
 import { userAuthMiddleware } from '../middileware/userAuth.js';
@@ -43,4 +46,10 @@ validRouter.delete('/:commentId', userAuthMiddleware, deleteComment);
 validRouter.get("/search",searchUser)
 
 validRouter.get('/:postId/user-comments', getComments);
+
+
+validRouter.get('/:postId/likes', userAuthMiddleware, getPostLikes);
+
+// Get comments for a post
+validRouter.get('/:postId/comments', userAuthMiddleware, getPostComments);
 export default validRouter;

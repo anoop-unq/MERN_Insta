@@ -393,16 +393,26 @@ export const getUserData = async(req,res)=>{
 
 export const getUserById = async (req, res) => {
   try {
-    const user = await userModel.findById(req.params.userId)
-      .select('-password -__v');
+    const { userId } = req.params;
+    
+    // Find user by ID and exclude sensitive fields
+    const user = await userModel.findById(userId)
+      .select('-password -verifyOtp -resetOtp -verifyOtpExpiresAt -resetOtpExpiresAt');
     
     if (!user) {
-      return res.status(404).json({ error: 'User not found' });
+      return res.status(404).json({ success: false, message: "User not found!" });
     }
     
-    res.json(user);
+    res.json({
+      success: true,
+      userData: user
+    });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    console.error("Error fetching user details:", error);
+    res.status(500).json({ 
+      success: false, 
+      message: "Internal server error" 
+    });
   }
 };
 
@@ -465,17 +475,135 @@ export const changeUserData = async (req, res) => {
 
 
 
+// export const updateProfile = async (req, res) => {
+//   try {
+//     const { name, bio } = req.body;
+//     const { userId: paramUserId } = req.params; // Rename to avoid confusion
+//     const requestingUserId = req.userId; // From auth middleware
+    
+//     console.log('Update profile request details:', {
+//       paramUserId,
+//       requestingUserId,
+//       name,
+//       bio
+//     });
+
+//     // Validate input
+//     if (!mongoose.Types.ObjectId.isValid(paramUserId)) {
+//       return res.status(400).json({ 
+//         success: false, 
+//         message: 'Invalid user ID format' 
+//       });
+//     }
+
+//     // Verify authorization
+//     if (requestingUserId !== paramUserId) {
+//       return res.status(403).json({ 
+//         success: false, 
+//         message: 'Unauthorized to update this profile' 
+//       });
+//     }
+
+//     // Validate at least one field is provided
+//     if (!name && !bio) {
+//       return res.status(400).json({
+//         success: false,
+//         message: 'At least one field (name or bio) must be provided'
+//       });
+//     }
+
+//     // Validate name length if provided
+//     if (name && name.length > 50) {
+//       return res.status(400).json({
+//         success: false,
+//         message: 'Name must be 50 characters or less'
+//       });
+//     }
+
+//     // Validate bio length if provided
+//     if (bio && bio.length > 200) {
+//       return res.status(400).json({
+//         success: false,
+//         message: 'Bio must be 200 characters or less'
+//       });
+//     }
+
+//     // Prepare update object
+//     const updateFields = {};
+//     if (name) updateFields.name = name;
+//     if (bio) updateFields.bio = bio;
+
+//     // Update the user
+//     const updatedUser = await userModel.findByIdAndUpdate(
+//       paramUserId,
+//       updateFields,
+//       { 
+//         new: true, 
+//         runValidators: true 
+//       }
+//     ).select('-password');
+
+//     if (!updatedUser) {
+//       return res.status(404).json({ 
+//         success: false, 
+//         message: 'User not found' 
+//       });
+//     }
+
+//     return res.status(200).json({
+//       success: true,
+//       message: 'Profile updated successfully',
+//       user: updatedUser
+//     });
+
+//   } catch (error) {
+//     console.error('Error in updateProfile:', error);
+    
+//     // Handle specific validation errors
+//     if (error.name === 'ValidationError') {
+//       return res.status(400).json({
+//         success: false,
+//         message: error.message
+//       });
+//     }
+
+//     return res.status(500).json({ 
+//       success: false, 
+//       message: error.message || 'Internal server error'
+//     });
+//   }
+// };
+
+
+// New controller for photo updates
+
 export const updateProfile = async (req, res) => {
   try {
-    const { name, bio } = req.body;
-    const { userId: paramUserId } = req.params; // Rename to avoid confusion
-    const requestingUserId = req.userId; // From auth middleware
+    const { 
+      name, 
+      bio, 
+      mobile, 
+      dateOfBirth, 
+      gender, 
+      portfolioUrl, 
+      education, 
+      address 
+    } = req.body;
     
+    const { userId: paramUserId } = req.params;
+    const requestingUserId = req.userId;
+
     console.log('Update profile request details:', {
       paramUserId,
       requestingUserId,
       name,
-      bio
+      bio,
+      mobile,
+      dateOfBirth,
+      gender,
+      portfolioUrl,
+      education,
+      address
     });
 
     // Validate input
@@ -495,10 +623,19 @@ export const updateProfile = async (req, res) => {
     }
 
     // Validate at least one field is provided
-    if (!name && !bio) {
+    const fieldsToCheck = {
+      name, bio, mobile, dateOfBirth, gender, 
+      portfolioUrl, education, address
+    };
+    
+    const hasAtLeastOneField = Object.values(fieldsToCheck).some(
+      field => field !== undefined && field !== null && field !== ""
+    );
+    
+    if (!hasAtLeastOneField) {
       return res.status(400).json({
         success: false,
-        message: 'At least one field (name or bio) must be provided'
+        message: 'At least one field must be provided for update'
       });
     }
 
@@ -511,17 +648,219 @@ export const updateProfile = async (req, res) => {
     }
 
     // Validate bio length if provided
-    if (bio && bio.length > 200) {
+    if (bio && bio.length > 150) {
       return res.status(400).json({
         success: false,
-        message: 'Bio must be 200 characters or less'
+        message: 'Bio must be 150 characters or less'
       });
+    }
+
+    // Validate mobile format if provided - STRICT 10 DIGITS ONLY
+    if (mobile !== undefined && mobile !== "") {
+      // Remove any non-digit characters first
+      const cleanedMobile = mobile.replace(/\D/g, '');
+      
+      // Check if it's exactly 10 digits
+      if (!/^\d{10}$/.test(cleanedMobile)) {
+        return res.status(400).json({
+          success: false,
+          message: 'Mobile number must be exactly 10 digits with no special characters'
+        });
+      }
+      
+      // Check if mobile number already exists for another user
+      const existingUser = await userModel.findOne({ 
+        mobile: cleanedMobile, 
+        _id: { $ne: paramUserId } 
+      });
+      
+      if (existingUser) {
+        return res.status(400).json({
+          success: false,
+          message: 'Mobile number already exists'
+        });
+      }
+      
+      // Update the mobile value to the cleaned version
+      req.body.mobile = cleanedMobile;
+    } else if (mobile === "") {
+      // Allow clearing the mobile field
+      req.body.mobile = "";
+    }
+
+    // Validate date of birth if provided
+    if (dateOfBirth) {
+      const dob = new Date(dateOfBirth);
+      const today = new Date();
+      
+      // Check if date is valid
+      if (isNaN(dob.getTime())) {
+        return res.status(400).json({
+          success: false,
+          message: 'Invalid date of birth format'
+        });
+      }
+      
+      // Check if date is in the future
+      if (dob > today) {
+        return res.status(400).json({
+          success: false,
+          message: 'Date of birth cannot be in the future'
+        });
+      }
+      
+      // Check if user is at least 13 years old
+      const minAgeDate = new Date();
+      minAgeDate.setFullYear(today.getFullYear() - 13);
+      if (dob > minAgeDate) {
+        return res.status(400).json({
+          success: false,
+          message: 'You must be at least 13 years old'
+        });
+      }
+    }
+
+    // Validate gender if provided
+    if (gender && !["Male", "Female", "Other", "Prefer not to say"].includes(gender)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid gender selection'
+      });
+    }
+
+    // Validate portfolio URL if provided
+    if (portfolioUrl && portfolioUrl !== "") {
+      const urlPattern = /^(https?:\/\/)?([\da-z.-]+)\.([a-z.]{2,6})([/\w .-]*)*\/?$/;
+      if (!urlPattern.test(portfolioUrl)) {
+        return res.status(400).json({
+          success: false,
+          message: 'Please enter a valid portfolio URL'
+        });
+      }
+    }
+
+    // Validate education data if provided
+    if (education && Array.isArray(education)) {
+      for (let i = 0; i < education.length; i++) {
+        const edu = education[i];
+        
+        // Validate institution name length
+        if (edu.institution && edu.institution.length > 100) {
+          return res.status(400).json({
+            success: false,
+            message: `Education entry ${i+1}: Institution name must be 100 characters or less`
+          });
+        }
+        
+        // Validate degree name length
+        if (edu.degree && edu.degree.length > 100) {
+          return res.status(400).json({
+            success: false,
+            message: `Education entry ${i+1}: Degree name must be 100 characters or less`
+          });
+        }
+        
+        // Validate field of study length
+        if (edu.fieldOfStudy && edu.fieldOfStudy.length > 100) {
+          return res.status(400).json({
+            success: false,
+            message: `Education entry ${i+1}: Field of study must be 100 characters or less`
+          });
+        }
+        
+        // Validate start year
+        if (edu.startYear) {
+          const currentYear = new Date().getFullYear();
+          if (edu.startYear < 1950 || edu.startYear > currentYear) {
+            return res.status(400).json({
+              success: false,
+              message: `Education entry ${i+1}: Start year must be between 1950 and ${currentYear}`
+            });
+          }
+        }
+        
+        // Validate end year
+        if (edu.endYear) {
+          const currentYear = new Date().getFullYear();
+          if (edu.endYear < 1950 || edu.endYear > currentYear + 10) {
+            return res.status(400).json({
+              success: false,
+              message: `Education entry ${i+1}: End year must be between 1950 and ${currentYear + 10}`
+            });
+          }
+          
+          // Validate that end year is not before start year
+          if (edu.startYear && edu.endYear < edu.startYear) {
+            return res.status(400).json({
+              success: false,
+              message: `Education entry ${i+1}: End year cannot be before start year`
+            });
+          }
+        }
+        
+        // Validate description length
+        if (edu.description && edu.description.length > 300) {
+          return res.status(400).json({
+            success: false,
+            message: `Education entry ${i+1}: Description must be 300 characters or less`
+          });
+        }
+      }
+    }
+
+    // Validate address data if provided
+    if (address) {
+      // Validate city length
+      if (address.city && address.city.length > 50) {
+        return res.status(400).json({
+          success: false,
+          message: 'City must be 50 characters or less'
+        });
+      }
+      
+      // Validate state length
+      if (address.state && address.state.length > 50) {
+        return res.status(400).json({
+          success: false,
+          message: 'State must be 50 characters or less'
+        });
+      }
+      
+      // Validate country length
+      if (address.country && address.country.length > 50) {
+        return res.status(400).json({
+          success: false,
+          message: 'Country must be 50 characters or less'
+        });
+      }
+      
+      // Validate street length
+      if (address.street && address.street.length > 200) {
+        return res.status(400).json({
+          success: false,
+          message: 'Street address must be 200 characters or less'
+        });
+      }
+      
+      // Validate zip code length
+      if (address.zipCode && address.zipCode.length > 20) {
+        return res.status(400).json({
+          success: false,
+          message: 'Zip code must be 20 characters or less'
+        });
+      }
     }
 
     // Prepare update object
     const updateFields = {};
     if (name) updateFields.name = name;
-    if (bio) updateFields.bio = bio;
+    if (bio !== undefined) updateFields.bio = bio;
+    if (mobile !== undefined) updateFields.mobile = mobile;
+    if (dateOfBirth) updateFields.dateOfBirth = new Date(dateOfBirth);
+    if (gender) updateFields.gender = gender;
+    if (portfolioUrl !== undefined) updateFields.portfolioUrl = portfolioUrl;
+    if (education !== undefined) updateFields.education = education;
+    if (address !== undefined) updateFields.address = address;
 
     // Update the user
     const updatedUser = await userModel.findByIdAndUpdate(
@@ -531,7 +870,7 @@ export const updateProfile = async (req, res) => {
         new: true, 
         runValidators: true 
       }
-    ).select('-password');
+    ).select('-password -verifyOtp -resetOtp');
 
     if (!updatedUser) {
       return res.status(404).json({ 
@@ -551,9 +890,19 @@ export const updateProfile = async (req, res) => {
     
     // Handle specific validation errors
     if (error.name === 'ValidationError') {
+      const errors = Object.values(error.errors).map(val => val.message);
       return res.status(400).json({
         success: false,
-        message: error.message
+        message: errors.join(', ')
+      });
+    }
+
+    // Handle duplicate key errors
+    if (error.code === 11000) {
+      const field = Object.keys(error.keyValue)[0];
+      return res.status(400).json({
+        success: false,
+        message: `${field} already exists`
       });
     }
 
@@ -564,8 +913,6 @@ export const updateProfile = async (req, res) => {
   }
 };
 
-
-// New controller for photo updates
 export const updateProfilePhoto = async (req, res) => {
   try {
     const { userId } = req.params;

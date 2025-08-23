@@ -7,6 +7,7 @@ import route from './routes/userRoute.js'
 import { authRouter } from './routes/authUserRoute.js'
 import validRouter from './routes/postRoutes.js'
 import connectCloudinary from './config/cloudinary.js'
+
 dotenv.config()
 
 const app = express()
@@ -16,8 +17,8 @@ const PORT = process.env.PORT || 3800
 console.log(PORT,"PORT")
 const allowedOrigins = [
     
-    // 'http://localhost:5173'
-    'https://mern-insta-ten.vercel.app'
+    'http://localhost:5173'
+    // 'https://mern-insta-ten.vercel.app'
 
 ]
 

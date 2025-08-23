@@ -2,7 +2,7 @@ import Comment from '../models/Comment.js';
 import Post from '../models/Post.js';
 import userModel from '../models/user.js';
 import { v2 as cloudinary } from 'cloudinary';
-
+import mongoose from 'mongoose';
 
 export const createPost = async (req, res) => {
   try {
@@ -325,6 +325,85 @@ export const updatePost = async (req, res) => {
       error: 'Failed to update post',
       details: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
+  }
+};
+
+
+export const getPostLikes = async (req, res) => {
+  try {
+    const { postId } = req.params;
+    
+    if (!mongoose.Types.ObjectId.isValid(postId)) {
+      return res.status(400).json({ message: 'Invalid post ID' });
+    }
+    
+    const post = await Post.findById(postId)
+      .populate({
+        path: 'likes',
+        select: 'name username photo'
+      });
+    
+    if (!post) {
+      return res.status(404).json({ message: 'Post not found' });
+    }
+    
+    // Check if user can view private post
+    if (!post.isPublic && post.author.toString() !== req.userId) {
+      return res.status(403).json({ message: 'Access denied to private post' });
+    }
+    
+    res.status(200).json({
+      success: true,
+      likes: post.likes || []
+    });
+  } catch (error) {
+    console.error('Error fetching post likes:', error);
+    res.status(500).json({ 
+      success: false,
+      message: 'Server error while fetching likes' 
+    });
+  }
+};
+// Get comments for a specific post with user details
+export const getPostComments = async (req, res) => {
+  try {
+    const { postId } = req.params;
+    
+    // Validate post ID
+    if (!mongoose.Types.ObjectId.isValid(postId)) {
+      return res.status(400).json({ message: 'Invalid post ID' });
+    }
+    
+    // Check if the post exists and is accessible
+    const post = await Post.findById(postId);
+    if (!post) {
+      return res.status(404).json({ message: 'Post not found' });
+    }
+    
+    // Check if the post is public or user is the author
+    if (!post.isPublic && post.author.toString() !== req.userId) {
+      return res.status(403).json({ message: 'Access denied to private post' });
+    }
+    
+    // Find comments for the post and populate author details
+    const comments = await Comment.find({ post: postId })
+      .populate({
+        path: 'author',
+        select: 'name username photo'
+      })
+      .populate({
+        path: 'likes',
+        select: 'name username photo'
+      })
+      .sort({ createdAt: -1 });
+    
+    res.status(200).json({
+      success: true,
+      comments
+    });
+  } catch (error) {
+    console.error('Error fetching post comments:', error);
+    res.status(500).json({ message: 'Server error while fetching comments' });
   }
 };
 
