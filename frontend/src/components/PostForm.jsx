@@ -89,7 +89,7 @@ const PostForm = () => {
   return (
     <div className="bg-white rounded-lg shadow p-6 mb-6">
       <div className="flex justify-between items-start mb-4">
-        <div className="flex items-start flex-1 min-w-0">
+        <div className="flex items-start flex-1 min-w-0" >
           <img 
             src={userdata?.user?.photo || assets.user_image || '/default-avatar.png'} 
             alt="User avatar" 
@@ -97,8 +97,8 @@ const PostForm = () => {
             onClick={() => navigateToProfile(userdata.user._id)}
           />
           <div className="min-w-0 flex-1">
-            <h3 className="font-semibold truncate">{userdata?.name}</h3>
-            <p className="text-gray-500 text-sm truncate">@{userdata?.user?.username}</p>
+            <h3 className="font-semibold truncate"  onClick={() => navigateToProfile(userdata.user._id)}>{userdata?.name}</h3>
+            <p className="text-gray-500 text-sm truncate" >{userdata?.user?.username}</p>
             {userdata?.user?.bio && (
               <div className="text-gray-500 text-sm mt-1">
                 {showFullBio ? (

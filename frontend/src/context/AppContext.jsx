@@ -37,6 +37,26 @@ const [isSearching, setIsSearching] = useState(false);
     }
   };
 
+  const getUserById = async (userId) => {
+  try {
+    const response = await axios.get(`${backendUrl}/api/user-details/${userId}`, {
+      withCredentials: true,
+    });
+
+    if (response.data.success) {
+      return response.data.userData;
+    } else {
+      toast.error(response.data.message || "Failed to fetch user data");
+      return null;
+    }
+  } catch (error) {
+    toast.error(
+      error?.response?.data?.message || error.message || "Something went wrong"
+    );
+    return null;
+  }
+};
+
   // Check auth state
   const getAuthState = async () => {
     try {
@@ -228,16 +248,26 @@ const deletePostImage = useCallback(async (postId) => {
 }, [backendUrl]);
 
 
-const updateUserProfile = async (userId, name, bio) => {
+// Update this function in your AppContext
+const updateUserProfile = async (userId, profileData) => {
   try {
-    const response = await axios.put(`${backendUrl}/api/users/edit/${userId}`, { name, bio });
+    const response = await axios.put(
+      `${backendUrl}/api/users/edit/${userId}`, 
+      profileData,
+      {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        withCredentials: true,
+      }
+    );
+    
     if (response.data.success) {
       setUserData(prev => ({
         ...prev,
         user: {
           ...prev.user,
-          name: name || prev.user.name,
-          bio: bio || prev.user.bio
+          ...response.data.user
         }
       }));
       toast.success('Profile updated successfully');
@@ -250,40 +280,152 @@ const updateUserProfile = async (userId, name, bio) => {
   }
 };
 
+const getPostLikes = async (postId) => {
+  try {
+    const response = await axios.get(`${backendUrl}/api/posts/${postId}/likes`, { // ← Remove comma here
+      withCredentials: true
+    });
+    return response.data;
+  } catch (error) {
+    throw error.response.data;
+  }
+};
+// Get post comments
+ const getPostComments = async (postId) => {
+  try {
+    const response = await axios.get(`${backendUrl}/api/posts/${postId}/comments`);
+    return response.data;
+  } catch (error) {
+    throw error.response.data;
+  }
+};
 
+// Add these to your AppContext.js
+const [conversations, setConversations] = useState([]);
+const [messages, setMessages] = useState([]);
+const [unreadCount, setUnreadCount] = useState(0);
 
-const addComment = async (postId, content) => {
+// Fetch conversations
+const fetchConversations = useCallback(async () => {
+  try {
+    const response = await axios.get(`${backendUrl}/api/messages/conversations`, {
+      withCredentials: true
+    });
+    if (response.data.success) {
+      setConversations(response.data.data);
+    }
+  } catch (error) {
+    console.error("Error fetching conversations:", error);
+  }
+}, [backendUrl]);
+
+const fetchMessages = useCallback(async (userId) => {
+  try {
+    const response = await axios.get(`${backendUrl}/api/messages/${userId}`, {
+      withCredentials: true
+    });
+    if (response.data.success) {
+      setMessages(response.data.data);
+    }
+  } catch (error) {
+    console.error("Error fetching messages:", error);
+    // Add error handling (e.g., toast notification)
+  }
+}, [backendUrl]);
+
+const sendMessage = useCallback(async (recipient, text) => {
   try {
     const response = await axios.post(
-      `${backendUrl}/api/posts/${postId}/comments`,
-      { content },
+      `${backendUrl}/api/messages`,
+      { recipient, text },
       { withCredentials: true }
     );
     
-    if (response.data.success && response.data.comment) {
+    if (response.data.success) {
+      // Add the new message to existing messages
+      setMessages(prev => [...prev, response.data.data.message]);
       
-      // Ensure author data is properly structured
-      const comment = response.data.comment;
-      if (!comment.author) {
-        comment.author = {
-          name: 'Unknown User',
-          username: 'unknown',
-          photo: assets.user_image
-        };
-      }
-      return {
-        success: true,
-        message: response.data.message,
-        comment: comment
-      };
-    
+      // Update conversations list
+      setConversations(prev => {
+        const existingConvIndex = prev.findIndex(conv => 
+          conv.participants.some(p => p._id === recipient)
+        );
+        
+        if (existingConvIndex >= 0) {
+          const updated = [...prev];
+          updated[existingConvIndex] = response.data.data.conversation;
+          return updated;
+        }
+        
+        return [response.data.data.conversation, ...prev];
+      });
+      
+      return true;
     }
-    throw new Error(response.data.message || 'Failed to add comment');
+    
+    throw new Error(response.data.message || 'Failed to send message');
   } catch (error) {
-    console.error('Add comment error:', error);
-    throw error;
+    console.error("Full send error:", {
+      config: error.config,
+      response: error.response?.data
+    });
+    
+    toast.error(
+      error.response?.data?.message || 
+      'Failed to send message. Please try again.'
+    );
+    return false;
   }
-};
+}, [backendUrl]);
+
+// Get unread count
+const getUnreadCount = useCallback(async () => {
+  try {
+    const response = await axios.get(`${backendUrl}/api/messages/unread/count`, {
+      withCredentials: true
+    });
+    if (response.data.success) {
+      setUnreadCount(response.data.data.unreadCount);
+    }
+  } catch (error) {
+    console.error("Error fetching unread count:", error);
+  }
+}, [backendUrl]);
+
+
+
+// const addComment = async (postId, content) => {
+//   try {
+//     const response = await axios.post(
+//       `${backendUrl}/api/posts/${postId}/comments`,
+//       { content },
+//       { withCredentials: true }
+//     );
+    
+//     if (response.data.success && response.data.comment) {
+      
+//       // Ensure author data is properly structured
+//       const comment = response.data.comment;
+//       if (!comment.author) {
+//         comment.author = {
+//           name: 'Unknown User',
+//           username: 'unknown',
+//           photo: assets.user_image
+//         };
+//       }
+//       return {
+//         success: true,
+//         message: response.data.message,
+//         comment: comment
+//       };
+    
+//     }
+//     throw new Error(response.data.message || 'Failed to add comment');
+//   } catch (error) {
+//     console.error('Add comment error:', error);
+//     throw error;
+//   }
+// };
 
 // Add this to your AppContext.js
 // const fetchComments = async (postId) => {
@@ -313,6 +455,49 @@ const addComment = async (postId, content) => {
 
 
 // Updated fetchComments function for your AppContext.js
+
+
+const addComment = async (postId, content) => {
+  try {
+    const response = await axios.post(
+      `${backendUrl}/api/posts/${postId}/comments`,
+      { content },
+      { withCredentials: true }
+    );
+    
+    if (response.data.success && response.data.comment) {
+      const comment = response.data.comment;
+      
+      // Ensure author data is properly structured
+      if (!comment.author) {
+        comment.author = {
+          name: 'Unknown User',
+          username: 'unknown',
+          photo: assets.user_image
+        };
+      }
+      
+      return {
+        success: true,
+        message: response.data.message,
+        comment: comment
+      };
+    }
+    throw new Error(response.data.message || 'Failed to add comment');
+  } catch (error) {
+    console.error('Add comment error:', error);
+    
+    // Provide more specific error messages
+    if (error.response?.data?.message) {
+      throw new Error(error.response.data.message);
+    } else if (error.message) {
+      throw error;
+    } else {
+      throw new Error('Network error or server unavailable');
+    }
+  }
+};
+
 const fetchComments = async (postId) => {
   try {
     console.log('Fetching comments for postId:', postId);
@@ -575,7 +760,17 @@ const likePost = async (postId) => {
     updatePostInContext,
     addComment,
     searchPosts,
-    fetchComments
+    fetchComments,
+      conversations,
+  messages,
+  unreadCount,
+  fetchConversations,
+  fetchMessages,
+  sendMessage,
+  getUnreadCount,
+  getUserById,
+  getPostLikes,
+  getPostComments 
   };
 
   return (
