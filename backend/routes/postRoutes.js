@@ -9,10 +9,11 @@ import {
   deletePostImage,
   searchUser,
   addComment,
-  deleteComment,
+  
   getComments,
   getPostLikes,
   getPostComments,
+  deleteComment,
  
 
 } from '../controllers/postController.js';
@@ -41,9 +42,7 @@ validRouter.delete("/:id/delete-image",userAuthMiddleware,deletePostImage)
 
 validRouter.post('/:postId/comments', userAuthMiddleware, addComment);
 
-validRouter.delete('/:commentId', userAuthMiddleware, deleteComment);
 
-validRouter.get("/search",searchUser)
 
 validRouter.get('/:postId/user-comments', getComments);
 
@@ -52,4 +51,7 @@ validRouter.get('/:postId/likes', userAuthMiddleware, getPostLikes);
 
 // Get comments for a post
 validRouter.get('/:postId/comments', userAuthMiddleware, getPostComments);
+
+validRouter.delete('/comments/:commentId',userAuthMiddleware,deleteComment)
+
 export default validRouter;

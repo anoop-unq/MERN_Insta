@@ -75,7 +75,7 @@ export const createPost = async (req, res) => {
     const populatedPost = await Post.findById(post._id)
       .populate({
         path: 'author',
-        select: 'name username email bio avatar',
+        select: 'name email bio avatar photo',
       })
       .lean();
 
@@ -89,7 +89,8 @@ export const createPost = async (req, res) => {
         _id: populatedPost.author._id,
         name: populatedPost.author.name,
         username: populatedPost.author.username,
-        avatar: populatedPost.author.avatar
+        avatar: populatedPost.author.avatar,
+        photo:populatedPost.author.photo
       },
       likes: [],
       comments: [],
@@ -308,7 +309,7 @@ export const updatePost = async (req, res) => {
       req.params.id,
       updateData,
       { new: true, runValidators: true }
-    ).populate('author', 'name username avatar');
+    ).populate('author', 'name username photo');
 
     console.log("Updated post:", updatedPost);
     
@@ -459,35 +460,98 @@ export const addComment = async (req, res) => {
   }
 };
 
+
+// // Delete a comment
+// export const deleteComment = async (req, res) => {
+//   try {
+//     const { commentId } = req.params;
+//     const userId = req.userId; // Using req.userId from your middleware
+
+//     // Find the comment
+//     const comment = await Comment.findById(commentId);
+    
+//     if (!comment) {
+//       return res.status(404).json({ 
+//         success: false,
+//         message: 'Comment not found' 
+//       });
+//     }
+
+//     // Check if the user is the author of the comment
+//     if (comment.author.toString() !== userId.toString()) {
+//       return res.status(403).json({ 
+//         success: false,
+//         message: 'Not authorized to delete this comment' 
+//       });
+//     }
+
+//     // Delete the comment
+//     await Comment.findByIdAndDelete(commentId);
+
+//     // Remove comment reference from the post
+//     await Post.findByIdAndUpdate(
+//       comment.post,
+//       { $pull: { comments: commentId } }
+//     );
+
+//     res.json({
+//       success: true,
+//       message: 'Comment deleted successfully'
+//     });
+//   } catch (error) {
+//     console.error('Delete comment error:', error);
+//     res.status(500).json({ 
+//       success: false,
+//       message: 'Server error', 
+//       error: error.message 
+//     });
+//   }
+// };
+
+
 export const deleteComment = async (req, res) => {
   try {
     const { commentId } = req.params;
-    const userId = req.user._id;
+    const userId = req.userId;
 
-    // Find and delete comment
-    const comment = await Comment.findOneAndDelete({
-      _id: commentId,
-      author: userId // Ensure only author can delete
-    });
-
+    // Find the comment and populate author info if needed
+    const comment = await Comment.findById(commentId);
+    
     if (!comment) {
-      return res.status(404).json({ message: 'Comment not found or unauthorized' });
+      return res.status(404).json({ 
+        success: false,
+        message: 'Comment not found' 
+      });
+    }
+    console.log(comment.author.toString(),"525")
+    // Check authorization
+    if (comment.author.toString() !== userId.toString()) {
+      return res.status(403).json({ 
+        success: false,
+        message: 'Not authorized to delete this comment' 
+      });
     }
 
-    // Remove comment reference from post
+    // Delete the comment
+    await Comment.findByIdAndDelete(commentId);
+
+    // Remove comment reference from the post
     await Post.findByIdAndUpdate(
       comment.post,
       { $pull: { comments: commentId } }
     );
 
-    res.status(200).json({
+    res.json({
       success: true,
       message: 'Comment deleted successfully'
     });
-
   } catch (error) {
-    console.error('Error deleting comment:', error);
-    res.status(500).json({ message: 'Server error' });
+    console.error('Delete comment error:', error);
+    res.status(500).json({ 
+      success: false,
+      message: 'Server error', 
+      error: error.message 
+    });
   }
 };
 
