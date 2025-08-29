@@ -49,32 +49,7 @@ const EditPost = () => {
     setRemoveImage(false); // If adding new image, cancel removal
   };
 
-  // const handleRemoveImage = () => {
-  //   setImage(null);
-  //   setImagePreview(null);
-  //   setRemoveImage(true);
-  //   if (fileInputRef.current) {
-  //     fileInputRef.current.value = '';
-  //   }
-  // };
-
-
-  //  const handleRemoveImage = async () => {
-  //   try {
-  //     setIsSubmitting(true);
-  //     const success = await deletePostImage(id);
-  //     if (success) {
-  //       setImagePreview(null);
-  //       setRemoveImage(true);
-  //       if (fileInputRef.current) {
-  //         fileInputRef.current.value = '';
-  //       }
-  //     }
-  //   } finally {
-  //     setIsSubmitting(false);
-  //   }
-  // };
-
+ 
   const handleRemoveImage = async () => {
   try {
     setIsSubmitting(true);
@@ -156,7 +131,7 @@ const EditPost = () => {
             placeholder="Edit your post..."
             className="w-full p-4 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             rows="5"
-            maxLength={500}
+            maxLength={150}
           />
           
           {/* Image preview section */}
@@ -204,7 +179,7 @@ const EditPost = () => {
               </label>
               
               <span className={`text-sm ${content.length === 500 ? 'text-red-500' : 'text-gray-500'}`}>
-                {content.length}/500
+                {content.length}/150
               </span>
             </div>
             

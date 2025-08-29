@@ -36,7 +36,7 @@ const LikesModal = ({ postId, onClose }) => {
   
   const handleViewProfile = (userId) => {
     onClose();
-    navigate(`/view-users/${userId}`);
+    navigate(`/view-specific-user/${userId}`);
   };
 
   return (

@@ -12,6 +12,7 @@ import EditPost from "./components/EditPost";
 import ViewUsers from "./components/ViewUsers";
 import UsersImage from "./components/UsersImage";
 import DuplicateView from "./components/DuplicateView";
+import  ViewSpecificUser  from "./components/ViewSpecificUser";
 
 
 function App() {
@@ -42,6 +43,7 @@ function App() {
       <Route path="/edit-profile/:id" element={<EditProfile />}/>
       <Route path="/edit-post/:id" element={<EditPost />}/>
       <Route path="/view-users/:userId" element={<ViewUsers/>}/>
+      <Route path="/view-specific-user/:userId" element={<ViewSpecificUser />}/>
       <Route path="/view-users/image/:userId" element={<UsersImage />} />
       <Route path="/view-user/image/:userId" element={<DuplicateView />}/>
     </Routes>

@@ -16,6 +16,7 @@ import {
 import { motion } from "framer-motion";
 import LikesModal from "./LikesModal";
 import CommentsModal from "./CommentsModal";
+import ConfirmationModal from "./ConfirmModal";
 
 const UserProfile = () => {
   const { id } = useParams();
@@ -37,6 +38,9 @@ const [showCommentsModal, setShowCommentsModal] = useState(false);
 const [selectedPostId, setSelectedPostId] = useState(null);
 const [selectedUserId, setSelectedUserId] = useState('');
 
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [postToDelete, setPostToDelete] = useState(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -81,7 +85,7 @@ const [selectedUserId, setSelectedUserId] = useState('');
     }
   };
 
-const handleShowLikes = (postId, userId) => {
+const handleShowLikes = (postId, userId,id) => {
   setSelectedPostId(postId);
   setSelectedUserId(userId); // You need to create this state
   setShowLikesModal(true);
@@ -92,6 +96,30 @@ const handleShowComments = (postId) => {
   setShowCommentsModal(true);
 };
 
+
+  const handleDeleteClick = (postId) => {
+    setPostToDelete(postId);
+    setIsModalOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    setIsDeleting(true);
+    try {
+      await deletePost(postToDelete);
+      setUserPosts(prevPosts => prevPosts.filter(post => post._id !== postToDelete));
+      setIsModalOpen(false);
+    } catch (error) {
+      console.error("Error deleting post:", error);
+    } finally {
+      setIsDeleting(false);
+      setPostToDelete(null);
+    }
+  };
+
+  const handleCancelDelete = () => {
+    setIsModalOpen(false);
+    setPostToDelete(null);
+  };
 
   const formatDate = (dateString) => {
     const options = { year: 'numeric', month: 'long', day: 'numeric' };
@@ -176,7 +204,7 @@ const handleShowComments = (postId) => {
           <motion.button
             whileHover={{ scale: 1.05, backgroundColor: "#f3f4f6" }}
             whileTap={{ scale: 0.95 }}
-            onClick={() => navigate(-1)}
+            onClick={() => navigate("/home")}
             className="flex items-center justify-center bg-white text-gray-700 rounded-full p-3 w-12 h-12 hover:bg-gray-100 transition-all duration-200 ease-in-out shadow-sm border border-gray-200 flex-shrink-0"
             aria-label="Go back"
           >
@@ -422,7 +450,7 @@ const handleShowComments = (postId) => {
                 <div className="flex items-center min-w-0">
                   <div className="w-12 h-12 rounded-full overflow-hidden mr-3 flex-shrink-0 border-2 border-blue-100 shadow-sm">
                     <img
-                      src={post.author?.photo || assets.user_image || "/default-avatar.png"}
+                      src={post.author?.photo  || assets.user_image || "/default-avatar.png"}
                       alt={post.author?.name}
                       className="w-full h-full object-cover"
                     />
@@ -451,13 +479,15 @@ const handleShowComments = (postId) => {
                     <motion.button
                       whileHover={{ scale: 1.1 }}
                       whileTap={{ scale: 0.9 }}
-                      onClick={() => handleDeletePost(post._id)}
+                      onClick={() => handleDeleteClick(post._id)}
                       className="text-red-500 hover:text-red-600 flex-shrink-0 transition-colors duration-200 p-2 rounded-lg bg-red-50 hover:bg-red-100"
                       aria-label="Delete post"
                     >
                       <FiTrash2 className="text-lg" />
                     </motion.button>
+  
                   </div>
+                  
                 )}
               </div>
 
@@ -537,7 +567,7 @@ const handleShowComments = (postId) => {
             whileTap={{ scale: 0.95 }}
           >
             <Link
-              to="/create-post"
+              to="/home"
               className="inline-flex items-center gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-semibold py-3 px-6 rounded-full shadow-lg transition-all duration-300 transform hover:shadow-xl"
             >
               <FiPlus className="text-lg" />
@@ -825,6 +855,15 @@ const handleShowComments = (postId) => {
     </div>
   </div>
 )}
+ <ConfirmationModal
+   
+        isOpen={isModalOpen}
+        onClose={handleCancelDelete}
+        onConfirm={handleConfirmDelete}
+        title="Delete Post"
+        message="Are you sure you want to delete this post? This action cannot be undone."
+        loading={isDeleting}
+      />
 </div>
 
         </motion.div>

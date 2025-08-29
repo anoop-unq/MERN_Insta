@@ -10,7 +10,7 @@ const Header = () => {
   const location = useLocation();
   const [isNewUser, setIsNewUser] = useState(false);
   const [isReturningUser, setIsReturningUser] = useState(false);
-
+  console.log(userdata,"55")
   useEffect(() => {
     // Check localStorage for signup flag
     const justSignedUp = localStorage.getItem('justSignedUp') === 'true';

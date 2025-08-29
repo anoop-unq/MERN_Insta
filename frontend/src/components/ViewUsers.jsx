@@ -224,18 +224,19 @@ const ViewUsers = () => {
                     {isLoadingDetails ? 'Loading...' : (showDetails ? 'Hide Details' : 'Show Details')}
                   </button>
                   
-                  <button
+                  {/* <button
                     onClick={handleMessageClick}
                     className="flex items-center justify-center px-4 py-2 bg-white text-blue-600 rounded-full hover:bg-blue-50 transition-colors duration-300"
                   >
                     <FaEnvelope className="mr-2" />
                     Message
-                  </button>
+                  </button> */}
                 </div>
               </div>
             </div>
           </div>
         </div>
+                </div>
 
         {/* User Details Section */}
         {showDetails && (
@@ -459,7 +460,7 @@ const ViewUsers = () => {
                         <FaGraduationCap className="mr-3 text-indigo-500 text-lg" />
                         <h4 className="text-lg font-semibold text-gray-800">Education</h4>
                         <span className="ml-2 text-sm text-gray-500 bg-indigo-100 px-2 py-1 rounded-full">
-                          {userDetails.education.length} {userDetails.education.length === 1 ? 'entry' : 'entries'}
+                          {/* {userDetails.education.length} {userDetails.education.length === 1 ? 'entry' : 'entries'} */}
                         </span>
                       </div>
                       {showEducation ? (
@@ -596,7 +597,7 @@ const ViewUsers = () => {
         )}
 
         {/* Posts Section */}
-        <div className="bg-white rounded-2xl shadow-md p-6">
+        <div className="bg-white rounded-2xl shadow-md p-6 m-7">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
             <h2 className="text-xl md:text-2xl font-semibold text-gray-800 mb-4 sm:mb-0">
               {userPosts.length} {userPosts.length === 1 ? 'Post' : 'Posts'}
@@ -630,7 +631,7 @@ const ViewUsers = () => {
             </div>
           )}
         </div>
-      </div>
+      
     </div>
   );
 };

@@ -14,10 +14,7 @@ export const AppContextProvider = (props) => {
 
   const backendUrl = import.meta.env.VITE_BACKEND_URL;
 
-  // Add these to your AppContext state
-const [searchQuery, setSearchQuery] = useState('');
-const [isSearching, setIsSearching] = useState(false);
-  
+
   // Fetch user data
   const getUserData = async () => {
     try {
@@ -83,7 +80,7 @@ const [isSearching, setIsSearching] = useState(false);
       const response = await axios.get(`${backendUrl}/api/posts`,{
         withCredentials:true
       });
-     
+      console.log(response.data,"API Context")
       setPosts(response.data);
     } catch (error) {
       toast.error("Failed to fetch posts");
@@ -177,41 +174,6 @@ const updateUserBio = async (userId, bio) => {
     return false;
   }
 };
-
-// Add this to your AppContext.js
-// const deletePostImage = useCallback(async (postId) => {
-//   try {
-//     const response = await axios.delete(
-//       `${backendUrl}/api/posts/${postId}/delete-image`,
-//       {},
-//       { withCredentials: true }
-//     );
-
-//     if (response.data.success) {
-//       // Update the post in context
-//       setPosts(prevPosts => 
-//         prevPosts.map(post => 
-//           post._id === postId ? response.data.post : post
-//         )
-//       );
-//       toast.success("Image removed successfully");
-//       return true;
-//     }
-
-//     throw new Error(response.data.message || 'Failed to remove image');
-
-//   } catch (error) {
-//     console.error('');
-//     toast.error(
-        
-//      "Post does not have an image to delete"
-//       || error.response?.data?.message || 
-//       error.message || 
-//       'Failed to remove image'
-//     );
-//     return false;
-//   }
-// }, [backendUrl]);
 
 
 const deletePostImage = useCallback(async (postId) => {
@@ -394,67 +356,6 @@ const getUnreadCount = useCallback(async () => {
 
 
 
-// const addComment = async (postId, content) => {
-//   try {
-//     const response = await axios.post(
-//       `${backendUrl}/api/posts/${postId}/comments`,
-//       { content },
-//       { withCredentials: true }
-//     );
-    
-//     if (response.data.success && response.data.comment) {
-      
-//       // Ensure author data is properly structured
-//       const comment = response.data.comment;
-//       if (!comment.author) {
-//         comment.author = {
-//           name: 'Unknown User',
-//           username: 'unknown',
-//           photo: assets.user_image
-//         };
-//       }
-//       return {
-//         success: true,
-//         message: response.data.message,
-//         comment: comment
-//       };
-    
-//     }
-//     throw new Error(response.data.message || 'Failed to add comment');
-//   } catch (error) {
-//     console.error('Add comment error:', error);
-//     throw error;
-//   }
-// };
-
-// Add this to your AppContext.js
-// const fetchComments = async (postId) => {
-//   try {
-//     const response = await axios.get(
-//       `${backendUrl}/api/posts/${postId}/user-comments`,
-//       { withCredentials: true }
-//     );
-    
-//     if (response.data.success) {
-//       return response.data.comments.map(comment => ({
-//         ...comment,
-//         // Ensure author exists
-//         author: comment.author || {
-//           name: 'Unknown User',
-//           username: 'unknown',
-//           photo: assets.user_image
-//         }
-//       }));
-//     }
-//     throw new Error(response.data.message || 'Failed to fetch comments');
-//   } catch (error) {
-//     console.error('Fetch comments error:', error);
-//     throw error;
-//   }
-// };
-
-
-// Updated fetchComments function for your AppContext.js
 
 
 const addComment = async (postId, content) => {
@@ -497,6 +398,35 @@ const addComment = async (postId, content) => {
     }
   }
 };
+
+// In your API context (AppContext)
+const deleteComment = async (commentId) => {
+  try {
+    const response = await axios.delete(
+      `${backendUrl}/api/posts/comments/${commentId}`, // Correct endpoint
+      { withCredentials: true }
+    );
+    
+    if (response.data.success) {
+      return {
+        success: true,
+        message: response.data.message
+      };
+    }
+    throw new Error(response.data.message || 'Failed to delete comment');
+  } catch (error) {
+    console.error('Delete comment error:', error);
+    
+    if (error.response?.data?.message) {
+      throw new Error(error.response.data.message);
+    } else if (error.message) {
+      throw error;
+    } else {
+      throw new Error('Network error or server unavailable');
+    }
+  }
+};
+
 
 const fetchComments = async (postId) => {
   try {
@@ -599,21 +529,6 @@ const fetchComments = async (postId) => {
 
 
 
-// Add this function to your context
-const searchPosts = useCallback(async (query) => {
-  setIsSearching(true);
-  try {
-    const response = await axios.get(`${backendUrl}/api/posts/search?q=${query}`, {
-      withCredentials: true
-    });
-    setPosts(response.data);
-  } catch (error) {
-    toast.error("Failed to search posts");
-    console.error("Search error:", error);
-  } finally {
-    setIsSearching(false);
-  }
-}, [backendUrl]);
 
 
 
@@ -759,7 +674,7 @@ const likePost = async (postId) => {
     deletePostImage,
     updatePostInContext,
     addComment,
-    searchPosts,
+  
     fetchComments,
       conversations,
   messages,
@@ -770,7 +685,8 @@ const likePost = async (postId) => {
   getUnreadCount,
   getUserById,
   getPostLikes,
-  getPostComments 
+  getPostComments,
+  deleteComment
   };
 
   return (

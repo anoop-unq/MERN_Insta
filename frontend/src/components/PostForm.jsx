@@ -87,6 +87,7 @@ const PostForm = () => {
   if (!islogged) return null;
 
   return (
+
     <div className="bg-white rounded-lg shadow p-6 mb-6">
       <div className="flex justify-between items-start mb-4">
         <div className="flex items-start flex-1 min-w-0" >
@@ -108,7 +109,7 @@ const PostForm = () => {
                     {userdata.user.bio}
                   </p>
                 )}
-                {userdata.user.bio.length > 100 && (
+                {userdata.user.bio.length > 150 && (
                   <button
                     onClick={toggleBio}
                     className="text-blue-500 hover:text-blue-700 text-sm mt-1 focus:outline-none"
@@ -142,7 +143,7 @@ const PostForm = () => {
           placeholder="What's on your mind?"
           className="w-full p-4 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
           rows={3}
-          maxLength={500}
+          maxLength={150}
         />
         
        {imagePreview && (  // Changed from !imagePreview to imagePreview
@@ -183,8 +184,8 @@ const PostForm = () => {
               />
             </label>
             
-            <span className={`text-sm ${content.length === 500 ? 'text-red-500' : 'text-gray-500'}`}>
-              {content.length}/500
+            <span className={`text-sm ${content.length === 150 ? 'text-red-500' : 'text-gray-500'}`}>
+              {content.length}/150
             </span>
           </div>
           

@@ -2,6 +2,7 @@ import { useContext, useEffect, useState } from "react";
 import { AppContext } from "../context/AppContext";
 import { motion, AnimatePresence } from "framer-motion";
 import { FiX, FiMessageSquare, FiUser, FiHeart, FiSend } from "react-icons/fi";
+import { useNavigate } from "react-router-dom";
 
 const CommentsModal = ({ postId, onClose }) => {
   const { getPostComments, userdata, addComment } = useContext(AppContext);
@@ -10,6 +11,8 @@ const CommentsModal = ({ postId, onClose }) => {
   const [error, setError] = useState(null);
   const [newComment, setNewComment] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const navigate = useNavigate();
+
 
   useEffect(() => {
     const fetchComments = async () => {
@@ -67,7 +70,11 @@ const CommentsModal = ({ postId, onClose }) => {
     setSubmitting(false);
   }
 };
-
+console.log(comments,"4555")
+  const handleViewProfile = (userId) => {
+    // onClose();
+    navigate(`/view-specific-user/${userId}`);
+  };
   const formatTime = (dateString) => {
     const date = new Date(dateString);
     const now = new Date();
@@ -123,6 +130,7 @@ const CommentsModal = ({ postId, onClose }) => {
             ) : (
               <div className="p-4">
                 {comments.map((comment) => (
+                  
                   <div
                     key={comment._id}
                     className="mb-6 last:mb-0"
@@ -133,8 +141,10 @@ const CommentsModal = ({ postId, onClose }) => {
                           src={comment.author.photo || "/default-avatar.png"}
                           alt={comment.author.name}
                           className="w-full h-full object-cover"
+                           onClick={() => handleViewProfile(comment.author._id)}
                           onError={(e) => {
-                            e.target.src = "/default-avatar.png";
+                            e.target.src = "/default-avatar.png"; 
+                      
                           }}
                         />
                       </div>
